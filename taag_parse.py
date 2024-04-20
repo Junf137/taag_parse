@@ -9,7 +9,7 @@ END_MARK = "---end---"
 repo_name = "https://github.com/patorjk/figlet.js"
 
 
-def parse_html_to_ascii_art(html_file: str) -> list[tuple[str, str, int]]:
+def parse_html_to_ascii_art(html_file: str) -> list[tuple[str, str, int, int]]:
     with open(html_file, "r", encoding="utf-8") as file:
         html_content = file.read()
 
@@ -23,12 +23,16 @@ def parse_html_to_ascii_art(html_file: str) -> list[tuple[str, str, int]]:
         font_name = pre_tag.get("id").strip()
         ascii_art = pre_tag.text
         line_nums = ascii_art.count("\n") + 1
-        ascii_arts.append((font_name, ascii_art, line_nums))
+        max_line_width = max(len(line) for line in ascii_art.split("\n"))
+        ascii_arts.append((font_name, ascii_art, line_nums, max_line_width))
 
     return ascii_arts
 
 
-def save_ascii_art_file(ascii_arts: list[tuple[str, str, int]], output_file: str):
+def save_ascii_art_file(ascii_arts: list[tuple[str, str, int, int]], output_file: str):
+    # Sort ASCII arts based on max_line_width in ascending order
+    ascii_arts_sorted = sorted(ascii_arts, key=lambda x: x[3])
+
     cur_line = 0
     with open(output_file, "w", encoding="utf-8") as file:
         # Write the header
@@ -39,18 +43,21 @@ def save_ascii_art_file(ascii_arts: list[tuple[str, str, int]], output_file: str
 
         cur_line += 5
 
-        for index, (font_name, ascii_art, line_nums) in enumerate(ascii_arts):
+        for index, (font_name, ascii_art, line_nums, max_line_width) in enumerate(
+            ascii_arts_sorted
+        ):
             file.write(f"{START_MARK}\n")
             file.write(f"msg index: {index}\n")
             file.write(f"font name: {font_name}\n")
 
             cur_line += 3
 
-            file.write(f"line range: {cur_line + 2 + 1},{cur_line + 2 + line_nums}\n")
+            file.write(f"line range: {cur_line + 3 + 1},{cur_line + 3 + line_nums}\n")
+            file.write(f"max line width: {max_line_width}\n")
             file.write(f"msg content:\n{ascii_art}\n")
             file.write(f"{END_MARK}\n\n")
 
-            cur_line += line_nums + 4
+            cur_line += line_nums + 5
 
 
 # if started as main
